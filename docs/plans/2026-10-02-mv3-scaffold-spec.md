@@ -1,6 +1,6 @@
 # MV3 extension scaffold — spec
 
-**Status:** draft, 2026-10-02. Spec for a TypeScript MV3 extension playground, revised after its review; waiting for approval.
+**Status:** approved, 2026-10-02. Spec for a TypeScript MV3 extension playground, revised after its review; approved by the user.
 
 **Path:** architectural (new project), brainstormed without `my:architect` at the user's request.
 
