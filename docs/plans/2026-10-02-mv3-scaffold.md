@@ -1,6 +1,6 @@
 # MV3 extension scaffold Implementation Plan
 
-**Status:** planned, 2026-10-02. Plan for the MV3 scaffold spec, reviewed and handed to the code stage.
+**Status:** done, 2026-10-02. Shipped in 2fbbcf5 (squash of `feat/mv3-scaffold`); `npm test` 19 pass, 0 fail; the manual demo flow passed in Chrome; end-of-branch reviews and their fix round are in the `-review.md`, `-review-2.md` and `-code-review.md` files beside this plan.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. The tasks build on each other (shared types, shared fakes, one growing `build.test.ts`), and each is small. The project's review rules in `~/.claude/CLAUDE.md` replace the skill's own reviews: no per-task reviewer, no final review pass. After each task, read `git diff` for the test files the task touched, and stop if an assertion was removed or weakened. The end-of-branch reviews run in a later session. Steps use checkbox (`- [ ]`) syntax for tracking.
 

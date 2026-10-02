@@ -1,6 +1,6 @@
 # MV3 extension scaffold — spec
 
-**Status:** approved, 2026-10-02. Spec for a TypeScript MV3 extension playground, revised after its review; approved by the user.
+**Status:** done, 2026-10-02. Shipped in 2fbbcf5 (squash of `feat/mv3-scaffold`); `npm test` 19 pass, 0 fail; the manual demo flow passed in Chrome.
 
 **Path:** architectural (new project), brainstormed without `my:architect` at the user's request.
 
