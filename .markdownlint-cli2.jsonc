@@ -1,0 +1,10 @@
+{
+  "config": {
+    "default": true,
+    // Specs and plans are written one paragraph per line.
+    // Wrapping them at 80 characters would only make diffs harder to read.
+    "MD013": false,
+    // Tables are edited by hand and by agents; their pipe spacing varies.
+    "MD060": false
+  }
+}
