@@ -874,6 +874,8 @@ The `<form>` lets the Enter key save too. The handler calls `preventDefault`, so
 
 - [ ] **Step 8: Write `src/options/options.ts`**
 
+> The end-of-branch fix round changed this file after the plan ran: a failed load now shows "Could not load: " and leaves the field empty. See Open Questions. The block below is the code as first written.
+
 ```ts
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, validateGreeting } from "../lib/settings.js";
 
@@ -953,7 +955,7 @@ The spec settles the main choices: `tsc` only, Chromium only, `storage.session` 
 ## Dependencies
 
 - `typescript@^7.0.2`, `@types/chrome@^0.3.4`, `@types/node@^22.20.5`, as dev dependencies. All three are approved in the spec (D6 and "Dependencies"). No runtime dependencies.
-- Node 22 on the developer machine. 22.17.0 is installed and supports `readdirSync` with `recursive`, `Dirent.parentPath` and the `node --test` glob.
+- Node 22 on the developer machine. 22.17.0 is installed and supports `readdirSync` with `recursive`, `Dirent.parentPath` and the `node --test` glob. The end-of-branch fix round added `"engines": { "node": ">=22" }` to `package.json`, so npm warns on an older Node. Task 1's `package.json` block does not show it.
 - A Chromium browser for the manual demo flow.
 - No environment variables. No config outside the repo.
 
@@ -961,13 +963,22 @@ The spec settles the main choices: `tsc` only, Chromium only, `storage.session` 
 
 - **TypeScript 7 behaviour.** Checked in a scratch copy with 7.0.2 on 2026-10-02: the settings build, `content.js` has no `export {};`, and both storage areas type-check as `Store`. A later 7.x could change this. Detection: `npm test` fails at the first build. Fallback, per the spec: pin `typescript@^5`. That changes a dependency version, so it is a gate.
 - **`export {};` in `content.js`.** Detection: `build.test.ts`, "content.js has no module syntax". Task 3, Step 9 proves the check fails when it should.
-- **Lost increments.** Two `page-seen` messages handled at once can lose one increment. Known limit from the spec, accepted for a demo counter. Not a finding.
+- **Lost increments.** Two `page-seen` messages handled at once can lose one increment. Known limit from the spec, accepted for a demo counter. Not a finding. The same race can undo a Reset: if `page-seen` reads 7, then Reset writes 0, then `page-seen` writes 8, the next popup shows 8. A fix would run `handleMessage` calls one at a time in `background.ts`.
 - **Stale files in `dist/`.** `npm run build` does not delete `dist/` first. A file removed from `src/` stays in `dist/` until `npm run clean`. `build.test.ts` only checks that named files exist, so it does not catch a stale extra file. Known limit for a playground. Not a finding.
 - **`npm run watch` does not copy HTML, CSS or the manifest.** Known limit from the spec. After editing those files, run `npm run build`.
 - **Regex HTML checks.** `build.test.ts` reads attributes with regular expressions. They expect double-quoted attribute values, as the two pages use. A page written with single quotes or no quotes would escape the checks. Known limit; the project has two hand-written pages.
 - **Values `chrome.storage` cannot hold.** `chrome.storage` stores JSON-like values. So `NaN` and `Infinity` cannot be the stored count, and the handler checks only `typeof value === "number"`. Not tested.
 - **Untested UI wiring.** `popup.ts`, `options.ts` and `background.ts` have no unit tests, as the spec decides. Detection: the manual demo flow below.
 - **The worktree inside the repo folder.** `.claude/worktrees/` is not ignored on `main` until this branch merges. While the worktree exists, `git status` in the main checkout lists `.claude/`. The plan's `.gitignore` fixes this after the merge.
+- **`maxlength="100"` counts spaces.** The browser limits the raw text, but `validateGreeting` limits the trimmed text. A greeting with spaces around it, close to 100 characters, is cut short while typing. The spaces would be trimmed on save anyway. Known limit, kept by the user's choice at the end-of-branch review.
+- **Stale files in `.test-build/`.** `npm test` does not delete `.test-build/` first. A renamed or deleted test file keeps its old compiled `.js`, which still matches the test glob and runs. No test file has been renamed. Detection: a test count that does not match the test files. Fix: `npm run clean`.
+- **Popup with an empty reply.** `popup.ts` reads `reply.ok` without checking that `reply` exists. `background.ts` always replies, and a stopped service worker makes Chrome reject the call, which the popup already handles. Today's code never produces an empty reply.
+- **No `sender` check in `background.ts`.** The manifest has no `externally_connectable`, so web pages cannot message the extension. Only `content.ts` sends, and it sends only `page-seen`. Known limit for a playground.
+- **A slow settings load on the options page.** The load sets the field when it finishes, so text typed before then is replaced. The load takes milliseconds. Known limit.
+- **A second injection of `content.ts`.** Its top-level `const pageSeen` is shared across the content-script context, so injecting the script twice into one frame throws. Nothing calls `chrome.scripting.executeScript` today.
+- **The "no module syntax" check.** `build.test.ts` catches only lines that start with `import` or `export`. Top-level `await` or `import.meta` in `content.ts` would pass the check and still fail in Chrome. Today's `content.ts` has neither.
+- **`DOM` types in the service worker.** `tsconfig.json` gives every file `"lib": ["ES2022", "DOM"]`, so `background.ts` could use `document` and still type-check, then throw at runtime. Today's `background.ts` uses no DOM API.
+- **`DEFAULT_SETTINGS` is not frozen.** `loadSettings` returns the shared object, so a caller that changed the result would change every later fallback. No caller changes it today.
 - **Reversibility.** Nothing is hard to reverse: no published extension, no user data that matters, no public API. Blast radius: the whole project is new, so there are no existing callers.
 
 ## Testing Strategy
@@ -981,4 +992,4 @@ The spec settles the main choices: `tsc` only, Chromium only, `storage.session` 
 
 ## Open Questions
 
-None. Two readings of the spec are recorded above, not asked: "not a valid `Settings`" includes a greeting that fails `validateGreeting` (Review Focus 4), and a rejected settings load shows the defaults (Task 4, Step 6).
+None. Two readings of the spec are recorded above, not asked: "not a valid `Settings`" includes a greeting that fails `validateGreeting` (Review Focus 4), and a rejected settings load shows the defaults (Task 4, Step 6). The end-of-branch review changed this for the options page only: there a rejected load shows "Could not load: " and leaves the field empty, because the default in the field let Save overwrite the stored greeting. The user chose this on 2026-10-02. The popup keeps the defaults.

@@ -271,6 +271,7 @@ Reloading the extension in `chrome://extensions` also resets the count to 0. Tha
 | Popup cannot reach the service worker | Count line shows "Background not reachable". |
 | Storage call fails in the service worker | `handleMessage` replies `{ ok: false, error }`; the popup shows "Error: " and the text. |
 | Saving settings fails | Options status line shows "Could not save: " and the error text. |
+| Loading settings fails on the options page | Options status line shows "Could not load: " and the error text. The field stays empty, so Save cannot write the default over the stored greeting. The popup still shows the default greeting. |
 | Extension reloaded while a tab is open | Content script catches "Extension context invalidated" and stays silent. |
 | Greeting empty or over 100 characters | Options page shows the error and does not save. `saveSettings` also throws. |
 | Saved settings are corrupt | `loadSettings` returns the defaults. |

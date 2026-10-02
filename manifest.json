@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Play Ext",
+  "version": "0.1.0",
+  "description": "A Manifest V3 learning playground.",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup/popup.html" },
+  "options_page": "options/options.html",
+  "content_scripts": [
+    { "matches": ["https://*/*"], "js": ["content.js"], "run_at": "document_idle" }
+  ]
+}
