@@ -1,10 +1,13 @@
-import { test } from "node:test";
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import { handleMessage } from "../src/lib/handler.js";
 import { createFailingStore, createFakeStore } from "./fakes.js";
 
 test("an empty store gives a count of 0", async () => {
-  assert.deepEqual(await handleMessage({ type: "get-stats" }, createFakeStore()), { ok: true, count: 0 });
+  assert.deepEqual(await handleMessage({ type: "get-stats" }, createFakeStore()), {
+    ok: true,
+    count: 0,
+  });
 });
 
 test("page-seen adds 1 each time", async () => {
@@ -41,16 +44,25 @@ test("a non-number stored value counts as 0", async () => {
 });
 
 test("a failing store.get gives an error reply, and handleMessage resolves", async () => {
-  const reply = await handleMessage({ type: "get-stats" }, createFailingStore("get", new Error("read failed")));
+  const reply = await handleMessage(
+    { type: "get-stats" },
+    createFailingStore("get", new Error("read failed")),
+  );
   assert.deepEqual(reply, { ok: false, error: "read failed" });
 });
 
 test("a failing store.set gives an error reply", async () => {
-  const reply = await handleMessage({ type: "page-seen" }, createFailingStore("set", new Error("write failed")));
+  const reply = await handleMessage(
+    { type: "page-seen" },
+    createFailingStore("set", new Error("write failed")),
+  );
   assert.deepEqual(reply, { ok: false, error: "write failed" });
 });
 
 test("a rejection with a non-Error value uses its text", async () => {
-  const reply = await handleMessage({ type: "reset-stats" }, createFailingStore("set", "plain text"));
+  const reply = await handleMessage(
+    { type: "reset-stats" },
+    createFailingStore("set", "plain text"),
+  );
   assert.deepEqual(reply, { ok: false, error: "plain text" });
 });

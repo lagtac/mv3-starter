@@ -11,9 +11,12 @@
     "build": "tsc -p tsconfig.json && node scripts/copy-static.mjs",
     "watch": "tsc -p tsconfig.json --watch",
     "clean": "node -e \"import('node:fs').then((fs) => { for (const d of ['dist', '.test-build']) fs.rmSync(d, { recursive: true, force: true }); })\"",
-    "test": "pnpm run build && tsc -p tsconfig.test.json && node --test \".test-build/test/**/*.test.js\""
+    "check": "biome check .",
+    "fix": "biome check --write .",
+    "test": "pnpm run check && pnpm run build && tsc -p tsconfig.test.json && node --test \".test-build/test/**/*.test.js\""
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@types/chrome": "^0.3.4",
     "@types/node": "^22.20.5",
     "typescript": "^7.0.2"

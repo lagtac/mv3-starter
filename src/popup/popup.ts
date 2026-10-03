@@ -13,7 +13,9 @@ async function send(message: Message): Promise<void> {
     count.textContent = "Background not reachable";
     return;
   }
-  count.textContent = reply.ok ? `Pages seen this session: ${reply.count}` : `Error: ${reply.error}`;
+  count.textContent = reply.ok
+    ? `Pages seen this session: ${reply.count}`
+    : `Error: ${reply.error}`;
 }
 
 reset.addEventListener("click", () => {

@@ -1,9 +1,9 @@
-import { test } from "node:test";
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import {
   DEFAULT_SETTINGS,
-  MAX_GREETING_LENGTH,
   loadSettings,
+  MAX_GREETING_LENGTH,
   saveSettings,
   validateGreeting,
 } from "../src/lib/settings.js";
@@ -14,7 +14,14 @@ test("nothing saved gives the defaults", async () => {
 });
 
 test("a saved value that is not valid Settings gives the defaults", async () => {
-  for (const saved of ["Hi", null, {}, { greeting: 7 }, { greeting: "  " }, { greeting: "x".repeat(101) }]) {
+  for (const saved of [
+    "Hi",
+    null,
+    {},
+    { greeting: 7 },
+    { greeting: "  " },
+    { greeting: "x".repeat(101) },
+  ]) {
     assert.deepEqual(
       await loadSettings(createFakeStore({ settings: saved })),
       DEFAULT_SETTINGS,

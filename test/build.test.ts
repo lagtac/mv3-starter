@@ -1,7 +1,7 @@
-import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 // This file runs from .test-build/test/, so the real build output is two levels up.
@@ -61,7 +61,9 @@ test("dist/ holds exactly the two pages", () => {
 test("every script and stylesheet a page loads exists", () => {
   for (const page of pages()) {
     const html = readDist(page);
-    const refs = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map((match) => match[1]);
+    const refs = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map(
+      (match) => match[1],
+    );
     assert.ok(refs.length > 0, `${page} loads no files`);
     for (const ref of refs) {
       // A page's paths are relative to its own folder: options.html links ../popup/popup.css.
