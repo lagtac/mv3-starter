@@ -30,6 +30,10 @@ interface Manifest {
   icons?: Record<string, string>;
   action?: { default_popup?: string; default_icon?: Record<string, string> };
   options_page?: string;
+  options_ui?: { page?: string };
+  side_panel?: { default_path?: string };
+  devtools_page?: string;
+  chrome_url_overrides?: Record<string, string>;
   content_scripts?: { matches?: string[]; js?: string[] }[];
 }
 
@@ -37,38 +41,58 @@ function readManifest(): Manifest {
   return JSON.parse(readDist("manifest.json")) as Manifest;
 }
 
+function manifestPages(manifest: Manifest): string[] {
+  return [
+    manifest.action?.default_popup,
+    manifest.options_page,
+    manifest.options_ui?.page,
+    manifest.side_panel?.default_path,
+    manifest.devtools_page,
+    ...Object.values(manifest.chrome_url_overrides ?? {}),
+  ].filter((page): page is string => page !== undefined);
+}
+
 test("every file named in the manifest exists in dist/", () => {
   const manifest = readManifest();
   const files = [
     manifest.background?.service_worker,
-    manifest.action?.default_popup,
-    manifest.options_page,
+    ...manifestPages(manifest),
     ...(manifest.content_scripts ?? []).flatMap((script) => script.js ?? []),
   ].filter((file): file is string => file !== undefined);
   assert.ok(files.length > 0, "the manifest names no files");
   for (const file of files) assert.ok(existsSync(join(dist, file)), `dist/${file} is missing`);
 });
 
-test("content.js has no module syntax", () => {
-  const lines = readDist("content.js").split("\n");
-  const moduleLines = lines.filter((line) => /^\s*(import|export)\b/.test(line));
-  assert.deepEqual(moduleLines, [], "content.js runs as a classic script");
+test("no content script has module syntax", () => {
+  const scripts = (readManifest().content_scripts ?? []).flatMap((script) => script.js ?? []);
+  assert.ok(scripts.length > 0, "the manifest names no content script");
+  for (const script of scripts) {
+    const lines = readDist(script).split("\n");
+    const moduleLines = lines.filter((line) => /^\s*(import|export)\b/.test(line));
+    assert.deepEqual(moduleLines, [], `${script} runs as a classic script`);
+  }
 });
 
-function pages(): string[] {
-  return readdirSync(dist, { recursive: true, encoding: "utf8" })
+function htmlFiles(dir: string): string[] {
+  return readdirSync(dir, { recursive: true, encoding: "utf8" })
     .filter((path) => path.endsWith(".html"))
     .sort();
 }
 
-test("the manifest declares the popup and the options page", () => {
-  const manifest = readManifest();
-  assert.equal(manifest.action?.default_popup, "popup/popup.html");
-  assert.equal(manifest.options_page, "options/options.html");
+function pages(): string[] {
+  return htmlFiles(dist);
+}
+
+// The build never cleans dist/, so a page renamed in src/ leaves the old copy behind.
+test("dist/ holds exactly the pages in src/", () => {
+  assert.deepEqual(pages(), htmlFiles(join(root, "src")));
 });
 
-test("dist/ holds exactly the two pages", () => {
-  assert.deepEqual(pages(), ["options/options.html", "popup/popup.html"]);
+// A page the code opens with chrome.tabs.create is allowed too, so this is not an exact match.
+test("the page tests check every page the manifest names", () => {
+  const names = manifestPages(readManifest());
+  const found = pages();
+  for (const name of names) assert.ok(found.includes(name), `${name} is not among ${found}`);
 });
 
 test("every script and stylesheet a page loads exists", () => {
