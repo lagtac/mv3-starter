@@ -1,6 +1,6 @@
 # Template gaps — spec
 
-**Status:** draft, 2026-10-04.
+**Status:** approved, 2026-10-04. Approved by the user after the spec review.
 
 **Path:** architectural (size Large, because the content script's host access changes). Brainstormed without `my:architect`: no data model, storage choice or public contract changes.
 
