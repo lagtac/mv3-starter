@@ -152,6 +152,14 @@ test("the copy step runs when started through a symlinked path", () => {
   });
 });
 
+test("the build deletes a file that is no longer in src/", () => {
+  const stale = join(dist, "stale.js");
+  writeFileSync(stale, "");
+  const result = spawnSync("pnpm", ["build"], { cwd: root, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(stale), false, "dist/stale.js is still there");
+});
+
 test("the source manifest has no version", () => {
   assert.equal("version" in readJson("manifest.json"), false, "the version lives in package.json");
 });

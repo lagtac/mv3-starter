@@ -1,7 +1,7 @@
 // Runs tsc --watch, and copies the static files again when one of them changes.
 // tsc watches only the .ts files, so without this a CSS or manifest edit never reaches dist/.
 import { spawn } from "node:child_process";
-import { watch } from "node:fs";
+import { rmSync, watch } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyStatic, STATIC_FILE } from "./copy-static.mjs";
@@ -9,7 +9,9 @@ import { copyStatic, STATIC_FILE } from "./copy-static.mjs";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const src = join(root, "src");
 
+// Start from an empty dist/, so a file deleted or renamed in src/ leaves no old copy behind.
 try {
+  rmSync(join(root, "dist"), { recursive: true, force: true });
   copyStatic();
 } catch (error) {
   console.error(error);
