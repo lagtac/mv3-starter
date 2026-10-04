@@ -1,6 +1,6 @@
 # Template gaps — spec
 
-**Status:** approved, 2026-10-04. Approved by the user after the spec review.
+**Status:** done, 2026-10-04. Shipped in dd777d4 (squash of `feat/template-gaps`); `pnpm test` 27 pass, 0 fail, 0 skipped; the manual Chrome check was not reported before the merge.
 
 **Path:** architectural (size Large, because the content script's host access changes). Brainstormed without `my:architect`: no data model, storage choice or public contract changes.
 

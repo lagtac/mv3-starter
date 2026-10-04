@@ -1,6 +1,6 @@
 # Template gaps Implementation Plan
 
-**Status:** draft, 2026-10-04.
+**Status:** done, 2026-10-04. Shipped in dd777d4 (squash of `feat/template-gaps`); `pnpm test` 27 pass, 0 fail, 0 skipped; the manual Chrome check was not reported before the merge.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. The tasks build on each other: they share one growing `test/build.test.ts` and the `copyStatic()` function, and each is small. The project's review rules in `~/.claude/CLAUDE.md` replace the skill's own reviews: no per-task reviewer, no final review pass. After each task, read `git diff` for the test files the task touched, and stop if an assertion was removed or weakened. The end-of-branch reviews run in a later session. Steps use checkbox (`- [ ]`) syntax for tracking.
 
