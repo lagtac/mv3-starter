@@ -3,10 +3,12 @@
 // tsc compiles only the .ts files, so the build runs this after it.
 import {
   copyFileSync,
+  existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
   realpathSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -21,8 +23,8 @@ function copy(from, to) {
   copyFileSync(from, to);
 }
 
-// The static files besides manifest.json. watch.mjs uses it to pick the changes to copy.
-export const STATIC_FILE = /\.(html|css|png)$/;
+// The static files besides manifest.json.
+const STATIC_FILE = /\.(html|css|png)$/;
 
 function readJson(path) {
   return JSON.parse(readFileSync(join(root, path), "utf8"));
@@ -42,6 +44,14 @@ export function copyStatic() {
     const from = join(entry.parentPath, entry.name);
     copy(from, join(dist, relative(src, from)));
   }
+}
+
+// Deletes the dist/ copy of a path under src/ that no longer exists: the same path, which also
+// covers a folder, and the .js file of a .ts file. tsc --watch and copyStatic() never delete.
+export function removeStale(name) {
+  if (existsSync(join(src, name))) return;
+  rmSync(join(dist, name), { recursive: true, force: true });
+  if (name.endsWith(".ts")) rmSync(join(dist, `${name.slice(0, -3)}.js`), { force: true });
 }
 
 // import.meta.url has symlinks resolved, so argv[1] must be too, or a symlinked path copies nothing.

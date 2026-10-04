@@ -40,7 +40,7 @@ Then load the extension:
 
 | Command | What it does |
 |---|---|
-| `pnpm watch` | Deletes and builds `dist/`, then rebuilds it on every change to `src/`, `manifest.json` or `package.json`. A rebuild does not delete files, so restart it after you delete or rename a file in `src/`. |
+| `pnpm watch` | Deletes and builds `dist/`, then rebuilds it on every change to `src/`, `manifest.json` or `package.json`. A file deleted or renamed in `src/` loses its copy in `dist/` too, on systems where the file watcher reports file names, such as Linux, macOS and Windows. Elsewhere, restart it after a delete or rename. |
 | `pnpm build` | Deletes `dist/`, then builds it once. |
 | `pnpm test` | Runs the Biome check, builds `dist/`, then runs the tests in `test/`. |
 | `pnpm check` | Runs Biome, the linter and formatter, without changing files. |

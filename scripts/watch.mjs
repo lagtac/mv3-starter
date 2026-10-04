@@ -1,10 +1,11 @@
-// Runs tsc --watch, and copies the static files again when one of them changes.
+// Runs tsc --watch, copies the static files again when one of them changes, and deletes the
+// dist/ copy of a file deleted from src/.
 // tsc watches only the .ts files, so without this a CSS or manifest edit never reaches dist/.
 import { spawn } from "node:child_process";
 import { rmSync, watch } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { copyStatic, STATIC_FILE } from "./copy-static.mjs";
+import { copyStatic, removeStale } from "./copy-static.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const src = join(root, "src");
@@ -19,13 +20,25 @@ try {
 }
 
 // One save often fires several events, so the copy waits until they stop.
+// The wait also lets an editor that saves by rename put the file back before removeStale looks.
 let timer;
+const changed = new Set();
 function schedule() {
   clearTimeout(timer);
   timer = setTimeout(copy, 100);
 }
 
 function copy() {
+  // A name that cannot be removed is dropped, so it does not block every later copy.
+  const names = [...changed];
+  changed.clear();
+  for (const name of names) {
+    try {
+      removeStale(name);
+    } catch (error) {
+      console.error(error);
+    }
+  }
   try {
     copyStatic();
   } catch (error) {
@@ -35,9 +48,11 @@ function copy() {
 
 // The watches start before tsc, so a watch that cannot start leaves no tsc running.
 // Some systems give no file name; a copy too many is harmless, a missed one is not.
+// Without a name, nothing is removed, and a deleted file's copy stays until a restart.
 const watchers = [
   watch(src, { recursive: true }, (_event, name) => {
-    if (name === null || STATIC_FILE.test(name)) schedule();
+    if (name !== null) changed.add(name);
+    schedule();
   }),
   // The root folder, not the two files: editors that save by rename leave a file watch behind.
   watch(root, (_event, name) => {

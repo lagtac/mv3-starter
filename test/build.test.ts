@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
+  chmodSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -10,7 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -158,6 +160,108 @@ test("the build deletes a file that is no longer in src/", () => {
   const result = spawnSync("pnpm", ["build"], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(existsSync(stale), false, "dist/stale.js is still there");
+});
+
+// pnpm watch calls removeStale with each changed path under src/. A variable path keeps tsc from
+// looking for types of the .mjs file.
+const copyStaticUrl = new URL("../../scripts/copy-static.mjs", import.meta.url).href;
+
+async function removeStale(name: string): Promise<void> {
+  const module = await import(copyStaticUrl);
+  module.removeStale(name);
+}
+
+test("removeStale deletes the dist/ copy of a file gone from src/", async () => {
+  const stale = ["gone.css", "gone.js", join("gone", "page.html")].map((path) => join(dist, path));
+  mkdirSync(join(dist, "gone"), { recursive: true });
+  for (const path of stale) writeFileSync(path, "");
+  try {
+    await removeStale("gone.css");
+    await removeStale("gone.ts");
+    await removeStale("gone");
+    for (const path of stale) assert.equal(existsSync(path), false, `${path} is still there`);
+  } finally {
+    rmSync(join(dist, "gone"), { recursive: true, force: true });
+    for (const path of stale) rmSync(path, { force: true });
+  }
+});
+
+test("removeStale keeps the dist/ copy of a file still in src/", async () => {
+  await removeStale(join("popup", "popup.css"));
+  await removeStale(join("popup", "popup.ts"));
+  await removeStale("popup");
+  for (const path of ["popup.css", "popup.js", "popup.html"]) {
+    assert.ok(existsSync(join(dist, "popup", path)), `dist/popup/${path} was deleted`);
+  }
+});
+
+async function waitFor(check: () => boolean, what: string): Promise<void> {
+  for (let i = 0; i < 100 && !check(); i++) await new Promise((done) => setTimeout(done, 100));
+  assert.ok(check(), `timed out waiting until ${what}`);
+}
+
+// Runs the real watch.mjs around body, and stops it after.
+async function withWatch(body: () => Promise<void>): Promise<void> {
+  const bin = join(root, "node_modules", ".bin");
+  const child = spawn(process.execPath, [join(root, "scripts", "watch.mjs")], {
+    cwd: root,
+    env: { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH}` },
+    stdio: "ignore",
+  });
+  const exited = new Promise((done) => child.on("exit", done));
+  try {
+    // watch.mjs empties dist/ first, so wait for tsc's first build before going on.
+    await waitFor(() => existsSync(join(dist, "background.js")), "tsc builds dist/");
+    await body();
+  } finally {
+    child.kill();
+    await exited;
+  }
+}
+
+test("pnpm watch deletes the dist/ copy of a file deleted from src/", async () => {
+  const source = join(root, "src", "watch-test.css");
+  const copy = join(dist, "watch-test.css");
+  try {
+    await withWatch(async () => {
+      writeFileSync(source, "");
+      await waitFor(() => existsSync(copy), "dist/watch-test.css is copied");
+      rmSync(source);
+      await waitFor(() => !existsSync(copy), "dist/watch-test.css is deleted");
+    });
+  } finally {
+    rmSync(source, { force: true });
+    rmSync(copy, { force: true });
+  }
+});
+
+// root ignores folder permissions, so the delete would not fail.
+test("pnpm watch keeps copying after a delete fails", {
+  skip: process.getuid?.() === 0,
+}, async () => {
+  const folder = join(root, "src", "watch-locked");
+  const locked = join(dist, "watch-locked");
+  const later = join(root, "src", "watch-later.css");
+  try {
+    await withWatch(async () => {
+      mkdirSync(folder);
+      writeFileSync(join(folder, "a.css"), "");
+      await waitFor(() => existsSync(join(locked, "a.css")), "dist/watch-locked/a.css is copied");
+      chmodSync(locked, 0o555);
+      rmSync(join(folder, "a.css"));
+      await new Promise((done) => setTimeout(done, 300));
+      writeFileSync(later, "");
+      await waitFor(
+        () => existsSync(join(dist, "watch-later.css")),
+        "dist/watch-later.css is copied",
+      );
+    });
+  } finally {
+    if (existsSync(locked)) chmodSync(locked, 0o755);
+    for (const path of [folder, locked, later, join(dist, "watch-later.css")]) {
+      rmSync(path, { recursive: true, force: true });
+    }
+  }
 });
 
 test("the source manifest has no version", () => {
