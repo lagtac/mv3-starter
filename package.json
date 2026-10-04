@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-static.mjs",
-    "watch": "tsc -p tsconfig.json --watch",
+    "package": "pnpm clean && pnpm test && node scripts/package.mjs",
+    "watch": "node scripts/watch.mjs",
     "clean": "node -e \"import('node:fs').then((fs) => { for (const d of ['dist', '.test-build']) fs.rmSync(d, { recursive: true, force: true }); })\"",
     "check": "biome check .",
     "fix": "biome check --write .",

@@ -123,7 +123,7 @@ Expected: FAIL in "dist/manifest.json carries the package.json version" with `un
 
 - Move the existing copy loop into `copyStatic()`. Keep `copy(from, to)`.
 - Replace the manifest copy: read `manifest.json` and `package.json` with `JSON.parse`, then write `` `${JSON.stringify({ ...manifest, version: pkg.version }, null, 2)}\n` `` to `dist/manifest.json` (create `dist/` first).
-- At the bottom: `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) copyStatic();`
+- At the bottom: `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) copyStatic();` The end-of-branch fix round changed this to `pathToFileURL(realpathSync(process.argv[1]))`, so a symlinked path to the script also runs the copy.
 - Update the header comment: it now also writes the version.
 
 - [ ] **Step 5: Run the tests**
@@ -488,11 +488,21 @@ The spec settles the main choices (T1 to T6). This plan adds these smaller ones:
 - **A scoped package name such as `@me/ext`** would put a `/` in the default zip name, so the zip lands in a subfolder of `release/`. Today's name is `play-ext`. Known limit.
 - **Task 4, Step 4 leaves `dist/relative.zip` while the resolve is broken.** The step deletes it. If it stays, it does not reach a release, because `pnpm package` cleans first.
 - **Scripted checks use `/tmp/watch.log` and `/tmp/m.json`.** Another session running the same check at the same time would collide. The checks are short.
-- **`pnpm version prerelease`** gives a version Chrome rejects. Detection: the Task 1 version test fails in `pnpm test`, so `pnpm package` stops before zipping.
+- **`pnpm version prerelease`** gives a version Chrome rejects. Detection: the Task 1 version test fails in `pnpm test`, so `pnpm package` stops before zipping. The test catches a prerelease suffix only. It does not catch a part above 65535 or a part with a leading zero, such as `1.01.0`, which Chrome also rejects. `pnpm version` never writes those. Known limit (end-of-branch code review).
+- **A `package.json` with no `version`** gives a `dist/manifest.json` with no version, and `pnpm build` and `pnpm watch` still succeed. Chrome rejects the manifest. The Task 1 test catches it in `pnpm test`, so `pnpm package` stops. Today's `package.json` has a version. Known limit (end-of-branch code review).
+- **The "no content script runs on every site" test checks only `<all_urls>` and a `*` host.** A `file:///*` pattern would pass it. Chrome also needs the user to switch on "Allow access to file URLs" for such a script. Today's match is `https://example.com/*`. Known limit (end-of-branch code review).
+- **On Node 22.0 to 22.14, `pnpm watch` stopped by SIGTERM leaves the TypeScript 7 compiler running.** `child.kill()` stops only the `tsc` launcher there. Ctrl+C in a terminal is not affected, and this machine runs Node 22.17. Raising `engines` to `>=22.15` would remove it, but the plan keeps `>=22`. Known limit (end-of-branch soundness review).
+- **The `error` handler on the `fs.watch` watchers is not exercised.** Removing `src/` under a running watch fires no error on Linux. The handler kills `tsc` and exits with code 1 when a watch error does fire. Known limit (end-of-branch code review fix round).
+- **`pnpm package <relative path>` resolves the path from the package root, not the caller's folder.** pnpm runs scripts from the package root; the caller's folder is only in `INIT_CWD`. The test spawns `node` directly, so it covers `node scripts/package.mjs`, not the `pnpm package` route. Known limit (end-of-branch code re-review).
+- **The main-module check in `copy-static.mjs` fails silently when the two URLs differ**, for example under `node --preserve-symlinks-main` or on Windows. `pnpm build` then exits 0 without copying. A module with no side effects plus a separate entry script would remove it. Known limit (end-of-branch code re-review).
+- **Ctrl+C can make `pnpm watch` exit with code 1.** SIGINT reaches `tsc` and the script together; if `tsc`'s exit is handled first, `stopping` is still false, and pnpm prints "Command failed". The scripted checks, which signal only the script, exit 0. Known limit (end-of-branch code re-review).
+- **A `tsc` that ignores SIGTERM keeps `pnpm watch` running.** Each Ctrl+C only calls `child.kill()` again; there is no forced exit on a second signal. Known limit (end-of-branch code re-review).
+- **`pnpm watch` fails on plain Windows.** `spawn("tsc")` without a shell cannot start the `tsc.cmd` shim, so it prints "Run this through pnpm watch". Same limit as `pnpm package` under T3. Known limit (end-of-branch code re-review).
+- **The symlink test deletes the real `dist/manifest.json` while it runs.** It restores the file in a `finally`. If the test run is killed in between, the next run without a rebuild fails the manifest tests; `pnpm test` rebuilds first, so this only affects a bare `node --test`. Known limit (end-of-branch code re-review).
 
 ## Testing Strategy
 
-- **Unit and build tests** (`pnpm test`): the 19 existing tests, plus 7 new ones in `test/build.test.ts`. Task 1: version carried and valid, no source version. Task 2: icon files and sizes. Task 3: no all-sites pattern. Task 4: three package tests, which spawn the real script and read the real zip (the end-to-end test of the new public surface, `pnpm package`).
+- **Unit and build tests** (`pnpm test`): the 19 existing tests, plus 8 new ones in `test/build.test.ts` (7 from the tasks, 1 from the end-of-branch fix round: the copy step runs through a symlinked path). Task 1: version carried and valid, no source version. Task 2: icon files and sizes. Task 3: no all-sites pattern. Task 4: three package tests, which spawn the real script and read the real zip (the end-to-end test of the new public surface, `pnpm package`).
 - **Red steps:** every new test fails first with the message its step names. Three checks need a deliberate break, because their first implementation passes them: the icon size (Task 2, Step 7), the delete (Task 4, Step 4) and the resolve (Task 4, Step 4).
 - **Scripted checks in the code stage:** Task 4, Steps 6 and 7 (`pnpm package` and its two messages); Task 5, Steps 2 to 4 (watch start, CSS edit, rename-saves, broken manifest, stop, missing `tsc`).
 - **End-of-branch check (manual, by the user):** the spec's seven-step watch check in Chrome, then `pnpm package`, unzip the zip, and "Load unpacked" it. The code stage cannot drive Chrome, so the review stage asks the user to run this.
