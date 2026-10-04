@@ -75,6 +75,7 @@ Change these before you build anything of your own:
 | `src/icons/` | The four icons. Each must be a PNG whose width and height equal its key in `manifest.json`. |
 | `CLAUDE.md`, `README.md` | The project name and description. |
 | `docs/plans/` | The design history of this starter. Delete it. |
+| `ROADMAP.md` | The roadmap of this starter. Delete it, or clear its rows and start your own. |
 
 Then replace the example code: the counter in `src/lib/handler.ts` and `src/lib/messages.ts`, and the greeting in `src/lib/settings.ts`. Delete or rewrite their tests in `test/` with them.
 
