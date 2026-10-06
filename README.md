@@ -1,4 +1,4 @@
-# play-ext
+# mv3-starter
 
 A starter for a Manifest V3 Chrome extension, written in TypeScript.
 
@@ -72,14 +72,14 @@ A new project is a copy of this repo with no shared git history. It does not rec
 On GitHub, click **Use this template**. Or, with the GitHub CLI:
 
 ```sh
-gh repo create my-ext --private --template lagtac/play-ext --clone
+gh repo create my-ext --private --template lagtac/mv3-starter --clone
 cd my-ext
 ```
 
 Without GitHub, copy the files and start a new history:
 
 ```sh
-git clone --depth 1 git@github.com:lagtac/play-ext.git my-ext
+git clone --depth 1 git@github.com:lagtac/mv3-starter.git my-ext
 cd my-ext
 rm -rf .git
 git init
@@ -120,5 +120,5 @@ Then check that everything still passes, and make the first commit:
 pnpm install
 pnpm test
 git add -A
-git commit -m "chore: start from the play-ext template"
+git commit -m "chore: start from the mv3-starter template"
 ```

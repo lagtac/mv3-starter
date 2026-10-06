@@ -1,10 +1,14 @@
 # Changelog
 
-Changes to the play-ext template, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Changes to the mv3-starter template, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 A project made from this template does not receive later changes by itself, because it shares no git history with this repo. Read the entries newer than the day the project was made, and copy the ones it needs by hand.
 
 ## [Unreleased]
+
+### Changed
+
+- Renamed the template from `play-ext` to `mv3-starter`. Its repo is now `git@github.com:lagtac/mv3-starter.git`, and the old URL no longer redirects. A project made from the template has its own name, so it has nothing to copy.
 
 ### 2026-10-06 — Starting point
 

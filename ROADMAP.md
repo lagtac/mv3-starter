@@ -1,6 +1,6 @@
 # Roadmap
 
-What is shipped, in progress and next for play-ext. Keep this short: details live in the linked docs.
+What is shipped, in progress and next for mv3-starter. Keep this short: details live in the linked docs.
 
 `✅ shipped` · `🚧 in progress` · `📋 planned` · `💭 discussed, not scheduled`
 
