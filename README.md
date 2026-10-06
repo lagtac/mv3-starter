@@ -65,6 +65,38 @@ The tests check every page in `dist/`. A page named in the manifest must exist t
 
 ## Using this as a template
 
+A new project is a copy of this repo with no shared git history. It does not receive later changes to the template by itself.
+
+### 1. Create the project
+
+On GitHub, click **Use this template**. Or, with the GitHub CLI:
+
+```sh
+gh repo create my-ext --private --template lagtac/play-ext --clone
+cd my-ext
+```
+
+Without GitHub, copy the files and start a new history:
+
+```sh
+git clone --depth 1 git@github.com:lagtac/play-ext.git my-ext
+cd my-ext
+rm -rf .git
+git init
+```
+
+### 2. Delete the template's own files
+
+Some files describe how this starter was built, not your project. Note today's date first: the entries in this repo's `CHANGELOG.md` after that date are the template fixes you may want to copy into your project later. Then delete them:
+
+```sh
+rm -rf docs/plans ROADMAP.md CHANGELOG.md
+```
+
+Start your own `ROADMAP.md` and `CHANGELOG.md` when you need them.
+
+### 3. Rename the project
+
 Change these before you build anything of your own:
 
 | File | What to change |
@@ -73,11 +105,20 @@ Change these before you build anything of your own:
 | `manifest.json` | `name`, `description`, and the `content_scripts` match pattern. |
 | `src/popup/popup.html`, `src/options/options.html` | The `<title>`. |
 | `src/icons/` | The four icons. Each must be a PNG whose width and height equal its key in `manifest.json`. |
-| `CLAUDE.md`, `README.md` | The project name and description. |
-| `docs/plans/` | The design history of this starter. Delete it. |
-| `ROADMAP.md` | The roadmap of this starter. Delete it, or clear its rows and start your own. |
-| `CHANGELOG.md` | The changes to this starter. Note today's date: later entries there are the template fixes to copy into your project. Then delete it, or clear its entries and start your own. |
-
-Then replace the example code: the counter in `src/lib/handler.ts` and `src/lib/messages.ts`, and the greeting in `src/lib/settings.ts`. Delete or rewrite their tests in `test/` with them.
+| `README.md` | The project name and description. Delete this "Using this as a template" section. |
+| `CLAUDE.md` | The project name and description, and the remote under "Git workflow". |
 
 A test fails if a content script matches every site, such as `<all_urls>` or `*://*/*`. Chrome's review is slower for such extensions. Change that test only if your extension needs it.
+
+### 4. Replace the example code
+
+Replace the counter in `src/lib/handler.ts` and `src/lib/messages.ts`, and the greeting in `src/lib/settings.ts`. Delete or rewrite their tests in `test/` with them.
+
+Then check that everything still passes, and make the first commit:
+
+```sh
+pnpm install
+pnpm test
+git add -A
+git commit -m "chore: start from the play-ext template"
+```
